@@ -12,7 +12,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 mcp = FastMCP(
-    name="hello-world-server",
+    name="hello-world-stramable",
     host="0.0.0.0",
     port=int(os.getenv("PORT", 8081)),
     log_level="INFO",
@@ -20,27 +20,28 @@ mcp = FastMCP(
 
 
 @mcp.tool()
-async def hello_world() -> str:
+async def hello_world_sse() -> str:
     """
     Output a hello world message.
-    
+
     This tool simply returns a greeting message "Hello World!".
     """
     logger.info("hello_world tool called")
-    return "Hello World!"
+    return "Hello World SSE!"
 
 
 @mcp.custom_route("/health", methods=["GET"])
 async def health(request: Request) -> JSONResponse:
     """Health check endpoint."""
-    return JSONResponse({"status": "healthy", "server": "hello-world-server"})
+    return JSONResponse({"status": "healthy", "server": "hello-world-stramable"})
 
 
 async def main():
-    logger.info(f"Starting hello-world-server MCP server on port {os.getenv('PORT', 8081)}!")
+    logger.info(
+        f"Starting hello-world-stramable MCP server on port {os.getenv('PORT', 8081)}!"
+    )
     await mcp.run_streamable_http_async()
 
 
 if __name__ == "__main__":
     asyncio.run(main())
-
