@@ -1,7 +1,0 @@
-pyproject.toml
-src/main.py
-src/hello_world_server.egg-info/PKG-INFO
-src/hello_world_server.egg-info/SOURCES.txt
-src/hello_world_server.egg-info/dependency_links.txt
-src/hello_world_server.egg-info/requires.txt
-src/hello_world_server.egg-info/top_level.txt
