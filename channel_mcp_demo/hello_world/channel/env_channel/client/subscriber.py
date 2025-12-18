@@ -24,6 +24,7 @@ class EnvChannelSubscriber:
         reconnect_interval: float = 10.0,
         auto_reconnect: bool = True,
         auto_connect: bool = False,
+        headers: Optional[Dict[str, str]] = None,
     ):
         """
         Initialize Channel Subscriber.
@@ -33,12 +34,15 @@ class EnvChannelSubscriber:
             reconnect_interval: Reconnection interval in seconds
             auto_reconnect: Whether to automatically reconnect on disconnect
             auto_connect: Whether to automatically connect on first subscribe
+            headers: Optional HTTP headers for the WebSocket handshake,
+                e.g. {"Authorization": "Bearer <token>"}.
             (no max retry limit; will retry indefinitely if enabled)
         """
         self.server_url = server_url
         self.reconnect_interval = reconnect_interval
         self.auto_reconnect = auto_reconnect
         self.auto_connect = auto_connect
+        self.headers = headers
         self.websocket: Optional[websockets.WebSocketClientProtocol] = None
         self._connected = False
         self._subscribed_topics: set[str] = set()
@@ -53,7 +57,13 @@ class EnvChannelSubscriber:
             return
 
         try:
-            self.websocket = await websockets.connect(self.server_url)
+            # 支持自定义握手头，比如 Authorization: Bearer <token>
+            if self.headers:
+                self.websocket = await websockets.connect(
+                    self.server_url, additional_headers=self.headers
+                )
+            else:
+                self.websocket = await websockets.connect(self.server_url)
             self._connected = True
             logger.info(f"Connected to Channel Server: {self.server_url}")
 
@@ -65,6 +75,7 @@ class EnvChannelSubscriber:
             self._receive_task = asyncio.create_task(self._receive_messages())
         except Exception as e:
             self._connected = False
+            logger.warning("Failed to connect to Channel Server %s: %s", self.server_url, e)
             raise ConnectionError(f"Failed to connect to {self.server_url}: {e}")
 
     async def disconnect(self) -> None:
@@ -153,7 +164,7 @@ class EnvChannelSubscriber:
             await self.websocket.send(json.dumps(subscribe_message))
             logger.info(f"Subscribed to topics: {topics}")
         except Exception as e:
-            logger.error(f"Error subscribing to channels: {e}")
+            logger.warning(f"Error subscribing to channels: {e}")
             raise ConnectionError(f"Failed to subscribe: {e}")
 
     async def unsubscribe(self, topics: list[str]) -> None:
@@ -177,7 +188,7 @@ class EnvChannelSubscriber:
             await self.websocket.send(json.dumps(unsubscribe_message))
             logger.info(f"Unsubscribed from topics: {topics}")
         except Exception as e:
-            logger.error(f"Error unsubscribing from channels: {e}")
+            logger.warning(f"Error unsubscribing from channels: {e}")
             raise ConnectionError(f"Failed to unsubscribe: {e}")
 
     async def _receive_messages(self) -> None:
@@ -196,7 +207,7 @@ class EnvChannelSubscriber:
                     message = EnvChannelMessage.from_dict(message_data)
                     await self._handle_message(message)
                 except Exception as e:
-                    logger.error(f"Error processing message: {e}")
+                    logger.warning(f"Error processing message: {e}")
 
             except websockets.exceptions.ConnectionClosed:
                 logger.warning("Connection closed")
@@ -208,7 +219,7 @@ class EnvChannelSubscriber:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"Error receiving message: {e}")
+                logger.warning(f"Error receiving message: {e}")
                 if self.auto_reconnect:
                     logger.info("Auto-reconnect enabled, starting reconnection...")
                     await self._reconnect()
@@ -225,7 +236,7 @@ class EnvChannelSubscriber:
                 else:
                     handler(message)
             except Exception as e:
-                logger.error(f"Error in message handler: {e}")
+                logger.warning(f"Error in message handler: {e}")
 
     async def _reconnect(self) -> None:
         """Reconnect to server with fixed interval (no limit)."""
@@ -239,6 +250,7 @@ class EnvChannelSubscriber:
             await asyncio.sleep(self.reconnect_interval)
             logger.info(f"Attempting to reconnect (attempt {attempt})...")
             try:
+                # 这里复用 connect，会继续带上 headers
                 await self.connect()
                 logger.info(f"Reconnected successfully after {attempt} attempt(s)")
                 return

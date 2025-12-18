@@ -4,7 +4,7 @@ import asyncio
 import logging
 import threading
 from collections import defaultdict
-from typing import Callable, Optional
+from typing import Callable, Dict, Optional
 
 from env_channel.common.filter import MessageFilter
 from env_channel.common.message import EnvChannelMessage
@@ -26,6 +26,7 @@ def env_channel_sub(
     auto_reconnect: bool = True,
     auto_connect: bool = True,
     auto_start: bool = True,
+    headers: Optional[Dict[str, str]] = None,
 ) -> Callable:
     """
     Decorator to mark a handler function with topics/filter for subscription.
@@ -57,6 +58,7 @@ def env_channel_sub(
         setattr(func, "__envchannel_auto_connect", auto_connect)
         setattr(func, "__envchannel_auto_reconnect", auto_reconnect)
         setattr(func, "__envchannel_reconnect_interval", reconnect_interval)
+        setattr(func, "__envchannel_headers", headers)
 
         async def wrapper(message: EnvChannelMessage):
             if asyncio.iscoroutinefunction(func):
@@ -73,6 +75,7 @@ def env_channel_sub(
                 "auto_connect": auto_connect,
                 "auto_reconnect": auto_reconnect,
                 "reconnect_interval": reconnect_interval,
+                "headers": headers,
             }
         )
 
@@ -130,6 +133,7 @@ async def _runner_coroutine(server_url: str) -> None:
     auto_connect = True
     auto_reconnect = True
     reconnect_interval = 10.0
+    headers: Optional[Dict[str, str]] = None
 
     for item in _HANDLER_REGISTRY:
         if item["server_url"] != server_url:
@@ -140,12 +144,16 @@ async def _runner_coroutine(server_url: str) -> None:
             auto_reconnect = item["auto_reconnect"]
         if "reconnect_interval" in item and item["reconnect_interval"] is not None:
             reconnect_interval = item["reconnect_interval"]
+        if "headers" in item and item["headers"] is not None:
+            # 如果同一个 server_url 下配置了多个 headers，这里采用“最后一个覆盖”的策略
+            headers = item["headers"]
 
     sub = EnvChannelSubscriber(
         server_url=server_url,
         auto_connect=auto_connect,
         auto_reconnect=auto_reconnect,
         reconnect_interval=reconnect_interval,
+        headers=headers,
     )
 
     try:

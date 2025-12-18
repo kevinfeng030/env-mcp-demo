@@ -23,6 +23,7 @@ class EnvChannelPublisher:
         auto_connect: bool = False,
         auto_reconnect: bool = True,
         max_retries: int = 3,
+        headers: Optional[Dict[str, str]] = None,
     ):
         """
         Initialize Channel Publisher.
@@ -33,12 +34,15 @@ class EnvChannelPublisher:
             auto_connect: If True, first publish will auto-connect (can skip explicit connect)
             auto_reconnect: If True, will attempt to reconnect on send failure
             max_retries: Max retry attempts when auto_reconnect is enabled
+            headers: Optional HTTP headers for the WebSocket handshake,
+                e.g. {"Authorization": "Bearer <token>"}.
         """
         self.server_url = server_url
         self.reconnect_interval = reconnect_interval
         self.auto_connect = auto_connect
         self.auto_reconnect = auto_reconnect
         self.max_retries = max_retries
+        self.headers = headers
         self.websocket: Optional[websockets.WebSocketClientProtocol] = None
         self._connected = False
         self._reconnect_task: Optional[asyncio.Task] = None
@@ -50,11 +54,18 @@ class EnvChannelPublisher:
             return
 
         try:
-            self.websocket = await websockets.connect(self.server_url)
+            # 支持自定义握手头，比如 Authorization: Bearer <token>
+            if self.headers:
+                self.websocket = await websockets.connect(
+                    self.server_url, additional_headers=self.headers
+                )
+            else:
+                self.websocket = await websockets.connect(self.server_url)
             self._connected = True
             logger.info(f"Connected to Channel Server: {self.server_url}")
         except Exception as e:
             self._connected = False
+            logger.warning("Failed to connect to Channel Server %s: %s", self.server_url, e)
             raise ConnectionError(f"Failed to connect to {self.server_url}: {e}")
 
     async def disconnect(self) -> None:
@@ -131,11 +142,19 @@ class EnvChannelPublisher:
     async def _reconnect(self) -> None:
         """Reconnect to server."""
         try:
-            self.websocket = await websockets.connect(self.server_url)
+            if self.headers:
+                self.websocket = await websockets.connect(
+                    self.server_url, additional_headers=self.headers
+                )
+            else:
+                self.websocket = await websockets.connect(self.server_url)
             self._connected = True
             logger.info(f"Reconnected to Channel Server: {self.server_url}")
         except Exception as e:
             self._connected = False
+            logger.warning(
+                "Failed to reconnect to Channel Server %s: %s", self.server_url, e
+            )
             raise ConnectionError(f"Failed to reconnect to {self.server_url}: {e}")
 
     def is_connected(self) -> bool:
