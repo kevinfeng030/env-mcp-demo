@@ -8,7 +8,11 @@ dependencies = [
     "mcp>=1.0.0",
     "fastmcp~=2.11.3",
     "fastapi[standard]>=0.100.0",
+    "env-channel",
 ]
+
+[tool.uv.sources]
+env-channel = { path = "./channel", editable = true }
 
 [build-system]
 requires = ["setuptools"]

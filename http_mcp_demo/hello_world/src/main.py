@@ -7,7 +7,7 @@ from mcp.server.fastmcp import FastMCP
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from channel.env_channel.client.publisher import EnvChannelPublisher
+from env_channel.client import EnvChannelPublisher
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
