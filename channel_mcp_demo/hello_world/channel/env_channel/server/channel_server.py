@@ -113,11 +113,23 @@ class EnvChannelServer:
             connection_id: Connection identifier
             data: Message data
         """
+        # 原始数据日志，方便排查客户端发来的内容
+        #logger.info("Received raw data from %s: %s", connection_id, data)
+
         try:
             message = ServerMessage(**data)
         except Exception as e:
             logger.error(f"Invalid message format: {e}")
             return
+
+        # 打印解析后的控制消息，包含 type / topics / data 等
+        # logger.info(
+        #     "Processing message from %s: type=%s topics=%s data=%s",
+        #     connection_id,
+        #     message.type,
+        #     getattr(message, "topics", None),
+        #     getattr(message, "data", None),
+        # )
 
         if message.type == "subscribe":
             if message.topics:

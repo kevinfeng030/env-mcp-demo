@@ -9,6 +9,10 @@ from starlette.responses import JSONResponse
 
 from env_channel.client import EnvChannelPublisher
 
+from env_channel.client.decorators import env_channel_sub
+
+from env_channel.common.message import EnvChannelMessage
+
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
@@ -16,10 +20,24 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 publisher = EnvChannelPublisher(
+    #server_url="ws://localhost:8765/channel",
     server_url="ws://localhost:8765/channel",
     auto_connect=True,
     auto_reconnect=True,
 )
+
+
+@env_channel_sub(
+    #server_url="ws://mcp.aworldagents.com/vpc-pre/stream/sandbox_id_1111111111152/channel",
+    server_url="ws://localhost:8765/channel",
+    topics=["demo-channel"],
+    auto_connect=True,
+    auto_reconnect=True,
+    reconnect_interval=10.0,
+    auto_start=True #（默认）：导入模块后自动启动订阅线程
+)
+async def handle_demo(msg: EnvChannelMessage):
+    logger.info("env_channel_sub decorator received: %s", msg.message)
 
 mcp = FastMCP(
     name="Channel-world-stramable",
