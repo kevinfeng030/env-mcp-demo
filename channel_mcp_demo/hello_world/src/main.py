@@ -24,7 +24,7 @@ publisher = EnvChannelPublisher(
 mcp = FastMCP(
     name="Channel-world-stramable",
     host="0.0.0.0",
-    port=int(os.getenv("PORT", 8082)),
+    port=8082,
     log_level="INFO",
 )
 
