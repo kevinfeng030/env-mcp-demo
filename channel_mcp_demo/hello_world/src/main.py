@@ -16,7 +16,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 publisher = EnvChannelPublisher(
-    server_url="ws://localhost:8765",
+    server_url="ws://localhost:8765/channel",
     auto_connect=True,
     auto_reconnect=True,
 )
