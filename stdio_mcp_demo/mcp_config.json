@@ -1,0 +1,14 @@
+{
+    "mcpServers": {
+        "hello-world-server": {
+            "type": "stdio",
+            "command": "uv",
+            "args": [
+                "--directory",
+                "hello_world",
+                "run",
+                "src/main.py"
+            ]
+        }
+    }
+}
