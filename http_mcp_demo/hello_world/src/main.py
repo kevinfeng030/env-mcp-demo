@@ -35,13 +35,16 @@ async def _background_task() -> None:
 
     轮询 3 分钟，每次间隔 5 秒发送一条带时间（年月日时分秒）的消息。
     """
+    start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     end_time = datetime.now() + timedelta(minutes=3)
     while datetime.now() < end_time:
         current_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        send_message = f"start:{start_time},hello env-channel at {current_time_str}"
+        logger.info(f"send message: {send_message}")
         await publisher.publish(
             topic="demo-channel",
             message={
-                "text": f"hello env-channel at {current_time_str}",
+                "text": send_message,
                 "time": current_time_str,
             },
         )
