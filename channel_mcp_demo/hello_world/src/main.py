@@ -30,7 +30,7 @@ publisher = EnvChannelPublisher(
 @env_channel_sub(
     #server_url="ws://mcp.aworldagents.com/vpc-pre/stream/sandbox_id_1111111111152/channel",
     server_url="ws://localhost:8765/channel",
-    topics=["demo-channel"],
+    topics=["demo-channel-new"],
     auto_connect=True,
     auto_reconnect=True,
     reconnect_interval=10.0,
@@ -54,19 +54,18 @@ async def _background_task() -> None:
     轮询 3 分钟，每次间隔 5 秒发送一条带时间（年月日时分秒）的消息。
     """
     start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    end_time = datetime.now() + timedelta(minutes=3)
-    while datetime.now() < end_time:
+    for count in range(1, 51):
         current_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        send_message = f"start:{start_time},Channel env-channel at {current_time_str}"
+        send_message = f"count:{count},start:{start_time},Channel env-channel at {current_time_str}"
         logger.info(f"send message: {send_message}")
         await publisher.publish(
-            topic="demo-channel",
+            topic="demo-channel-new",
             message={
                 "text": send_message,
                 "time": current_time_str,
             },
         )
-        await asyncio.sleep(5)
+        await asyncio.sleep(10)
 
 
 @mcp.tool()
