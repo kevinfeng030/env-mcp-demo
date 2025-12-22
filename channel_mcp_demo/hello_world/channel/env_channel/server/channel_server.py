@@ -101,9 +101,15 @@ class EnvChannelServer:
             try:
                 data = await connection.receive()
                 await self._process_message(connection_id, data)
-            except Exception as e:
-                logger.error(f"Error processing message from {connection_id}: {e}")
+            except ConnectionError as e:
+                # Connection closed by client or network error, break the loop
+                logger.info(f"Connection {connection_id} closed: {e}")
                 break
+            except Exception as e:
+                # Log error but continue processing (don't break on message format errors)
+                logger.error(f"Error processing message from {connection_id}: {e}")
+                # Continue to next message instead of breaking
+                continue
 
     async def _process_message(self, connection_id: str, data: dict) -> None:
         """
@@ -114,7 +120,7 @@ class EnvChannelServer:
             data: Message data
         """
         # 原始数据日志，方便排查客户端发来的内容
-        #logger.info("Received raw data from %s: %s", connection_id, data)
+        logger.info("Received raw data from %s: %s", connection_id, data)
 
         try:
             message = ServerMessage(**data)
@@ -133,6 +139,12 @@ class EnvChannelServer:
 
         if message.type == "subscribe":
             if message.topics:
+                # 打印收到订阅请求的日志（连接 ID 和订阅的 topic 列表）
+                logger.info(
+                    "Connection %s subscribed to topics: %s",
+                    connection_id,
+                    message.topics,
+                )
                 self.connection_manager.subscribe(connection_id, message.topics)
         elif message.type == "unsubscribe":
             if message.topics:
@@ -148,11 +160,17 @@ class EnvChannelServer:
                     tags=message.data.get("tags", []),
                 )
                 await self.connection_manager.broadcast(channel_message)
+            else:
+                logger.warning(
+                    "Received publish message without 'data' field from %s. "
+                    "Expected format: {'type': 'publish', 'data': {'topic': ..., 'message': ...}}",
+                    connection_id,
+                )
         elif message.type == "ping":
             # Respond to ping
             connection = self.connection_manager.connections.get(connection_id)
             if connection:
-                await connection.send({"type": "pong"})
+                await connection.send({"type": "ping"})
 
     async def publish(self, message: EnvChannelMessage) -> None:
         """

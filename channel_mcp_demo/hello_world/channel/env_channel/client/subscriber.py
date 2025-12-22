@@ -49,8 +49,10 @@ class EnvChannelSubscriber:
         self._handlers: list[tuple[Callable[[EnvChannelMessage], Any], Optional[MessageFilter]]] = []
         self._receive_task: Optional[asyncio.Task] = None
         self._reconnect_task: Optional[asyncio.Task] = None
+        logger.warning(f"subscriber init:{self.server_url}")
 
     async def connect(self) -> None:
+        logger.warning("subscriber connect start")
         """Connect to the Channel Server."""
         if self._connected:
             logger.warning("Already connected")
@@ -66,6 +68,7 @@ class EnvChannelSubscriber:
                 self.websocket = await websockets.connect(self.server_url)
             self._connected = True
             logger.info(f"Connected to Channel Server: {self.server_url}")
+            logger.warning(f"Connected success to Channel Server: {self.websocket}")
 
             # Resubscribe to previously subscribed topics
             if self._subscribed_topics:
