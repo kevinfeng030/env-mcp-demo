@@ -28,17 +28,17 @@ publisher = EnvChannelPublisher(
 )
 
 
-@env_channel_sub(
-    #server_url="ws://mcp.aworldagents.com/vpc-pre/stream/sandbox_id_1111111111152/channel",
-    server_url="ws://localhost:8765/channel",
-    topics=["add-tool-channel"],
-    auto_connect=True,
-    auto_reconnect=True,
-    reconnect_interval=10.0,
-    auto_start=True #（默认）：导入模块后自动启动订阅线程
-)
-async def handle_demo(msg: EnvChannelMessage):
-    logger.info("add-tool-channel-local decorator received: %s", msg.message)
+# @env_channel_sub(
+#     #server_url="ws://mcp.aworldagents.com/vpc-pre/stream/sandbox_id_1111111111152/channel",
+#     server_url="ws://localhost:8765/channel",
+#     topics=["add-tool-channel"],
+#     auto_connect=True,
+#     auto_reconnect=True,
+#     reconnect_interval=10.0,
+#     auto_start=True #（默认）：导入模块后自动启动订阅线程
+# )
+# async def handle_demo(msg: EnvChannelMessage):
+#     logger.info("add-tool-channel-local decorator received: %s", msg.message)
 
 mcp = FastMCP(
     name="Channel-world-stramable",
