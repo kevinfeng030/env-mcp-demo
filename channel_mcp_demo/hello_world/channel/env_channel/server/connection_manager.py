@@ -115,7 +115,7 @@ class ConnectionManager:
         """
         subscribers = self.get_subscribers(message.topic)
         if not subscribers:
-            logger.debug(f"No subscribers for topic: {message.topic}")
+            logger.warning(f"No subscribers for topic: {message.topic}")
             return
 
         # Send message to all subscribers

@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import traceback
 from typing import Optional
 from uuid import uuid4
 
@@ -70,20 +71,25 @@ class EnvChannelServer:
             await self.server.wait_closed()
         logger.info("Channel Server stopped")
 
-    async def _handle_connection(self, websocket: WebSocketServerProtocol) -> None:
+    async def _handle_connection(self, websocket: WebSocketServerProtocol, path: str) -> None:
         """
         Handle a new WebSocket connection.
 
         Args:
             websocket: WebSocket server protocol instance
         """
+        if path != "/channel":
+            logger.warning(f"Rejected connection with invalid path: {path}")
+            await websocket.close(code=4004, reason="Invalid path")
+            return
+
         connection_id = str(uuid4())
         connection = WebSocketConnection(websocket)
         self.connection_manager.add_connection(connection_id, connection)
 
         try:
             await self._handle_messages(connection_id, connection)
-        except Exception as e:
+        except BaseException as e:
             logger.error(f"Error handling connection {connection_id}: {e}")
         finally:
             self.connection_manager.remove_connection(connection_id)
@@ -105,7 +111,7 @@ class EnvChannelServer:
                 # Connection closed by client or network error, break the loop
                 logger.info(f"Connection {connection_id} closed: {e}")
                 break
-            except Exception as e:
+            except BaseException as e:
                 # Log error but continue processing (don't break on message format errors)
                 logger.error(f"Error processing message from {connection_id}: {e}")
                 # Continue to next message instead of breaking
@@ -124,8 +130,8 @@ class EnvChannelServer:
 
         try:
             message = ServerMessage(**data)
-        except Exception as e:
-            logger.error(f"Invalid message format: {e}")
+        except BaseException:
+            logger.error(f"Invalid message format: {traceback.format_exc()}")
             return
 
         # 打印解析后的控制消息，包含 type / topics / data 等
@@ -192,4 +198,3 @@ class EnvChannelServer:
             "connections": self.connection_manager.get_connection_count(),
             "channels": self.connection_manager.get_channel_count(),
         }
-

@@ -1,5 +1,13 @@
 import asyncio
 from env_channel.server import EnvChannelServer
+import logging
+
+
+logging.basicConfig(
+    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+
+logger = logging.getLogger(__name__)
 
 
 async def main():
