@@ -61,7 +61,7 @@ async def _background_task(augend: float, addend: float) -> None:
         send_message = f"第{count}次推送: {augend} + {addend} = {result}, 时间: {current_time_str}"
         logger.info(f"send message: {send_message}")
         await publisher.publish(
-            topic="add-tool-channel",
+            topic="env-tool-message-topic",
             message={
                 "text": send_message,
                 "result": result,
