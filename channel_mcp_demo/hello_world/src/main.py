@@ -56,7 +56,7 @@ async def _background_task(augend: float, addend: float, env_content: Dict[str, 
     """
     result = augend + addend
     start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    for count in range(1, 51):
+    for count in range(1, 11):
         current_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         send_message = f"第{count}次推送: {augend} + {addend} = {result}, 时间: {current_time_str}"
         logger.info(f"send message: {send_message}")
