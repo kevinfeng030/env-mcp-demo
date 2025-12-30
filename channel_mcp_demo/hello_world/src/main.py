@@ -52,11 +52,11 @@ async def _background_task(augend: float, addend: float, env_content: Dict[str, 
     """
     Background async task triggered by hello_world_sse.
 
-    循环发送50次消息，每次包含加法计算结果和时间。
+    循环发送3次消息，每次包含加法计算结果和时间。
     """
     result = augend + addend
     start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    for count in range(1, 11):
+    for count in range(1, 3):
         current_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         send_message = f"第{count}次推送: {augend} + {addend} = {result}, 时间: {current_time_str}"
         logger.info(f"send message: {send_message}")
