@@ -2,6 +2,7 @@ import asyncio
 import os
 from datetime import datetime, timedelta
 import logging
+from typing import Dict, Any
 
 from mcp.server.fastmcp import FastMCP
 from pydantic import Field
@@ -21,12 +22,11 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 publisher = EnvChannelPublisher(
-    #server_url="ws://localhost:8765/channel",
+    # server_url="ws://localhost:8765/channel",
     server_url="ws://localhost:8765/channel",
     auto_connect=True,
     auto_reconnect=True,
 )
-
 
 # @env_channel_sub(
 #     #server_url="ws://mcp.aworldagents.com/vpc-pre/stream/sandbox_id_1111111111152/channel",
@@ -48,7 +48,7 @@ mcp = FastMCP(
 )
 
 
-async def _background_task(augend: float, addend: float) -> None:
+async def _background_task(augend: float, addend: float, env_content: Dict[str, Any] = None) -> None:
     """
     Background async task triggered by hello_world_sse.
 
@@ -64,6 +64,7 @@ async def _background_task(augend: float, addend: float) -> None:
             topic="env-tool-message-topic",
             message={
                 "text": send_message,
+                "env_content": env_content,
                 "result": result,
                 "augend": augend,
                 "addend": addend,
@@ -77,14 +78,18 @@ async def _background_task(augend: float, addend: float) -> None:
 
 @mcp.tool()
 async def add(
-    augend: float = Field(
-        0.0,
-        description="被加数，加法运算中的第一个数（默认值：0.0）"
-    ),
-    addend: float = Field(
-        0.0,
-        description="加数，加法运算中的第二个数（默认值：0.0）"
-    )
+        augend: float = Field(
+            0.0,
+            description="被加数，加法运算中的第一个数（默认值：0.0）"
+        ),
+        addend: float = Field(
+            0.0,
+            description="加数，加法运算中的第二个数（默认值：0.0）"
+        ),
+        env_content: Dict[str, Any] = Field(
+            None,
+            description="环境上下文内容，以字典形式传递任意键值对（默认值：None）"
+        )
 ) -> str:
     """
     执行加法运算，异步推送计算结果。
@@ -97,7 +102,7 @@ async def add(
     """
     logger.info(f"Channel_world tool called with augend={augend}, addend={addend}")
     # 提交一个异步后台任务（无需等待完成）
-    asyncio.create_task(_background_task(augend, addend))
+    asyncio.create_task(_background_task(augend, addend, env_content))
     return "正在计算中，请等待"
 
 
