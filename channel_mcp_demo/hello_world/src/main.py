@@ -86,7 +86,7 @@ async def add(
             0.0,
             description="加数，加法运算中的第二个数（默认值：0.0）"
         ),
-        env_content: Dict[str, Any] = Field(
+        aworld_env_content: Dict[str, Any] = Field(
             None,
             description="环境上下文内容，以字典形式传递任意键值对（默认值：None）"
         )
@@ -102,7 +102,7 @@ async def add(
     """
     logger.info(f"Channel_world tool called with augend={augend}, addend={addend}")
     # 提交一个异步后台任务（无需等待完成）
-    asyncio.create_task(_background_task(augend, addend, env_content))
+    asyncio.create_task(_background_task(augend, addend, aworld_env_content))
     return "正在计算中，请等待"
 
 
